@@ -1104,17 +1104,16 @@ const DataModelerPage = () => {
                     </div>
                   </div>
                   
-                  <div className="border border-gray-300 rounded-lg p-6 bg-gray-50">
+                  {
+                    /*<div className="border border-gray-300 rounded-lg p-6 bg-gray-50">
                     <pre className="text-sm font-mono bg-gray-800 text-green-400 p-4 rounded overflow-x-auto">
                       {selectedConcept.mermaidCode}
                     </pre>
                   </div>
+                  */}
                   <div className="border border-gray-300 rounded-lg p-6 bg-gray-50">
-                    <pre className="text-sm font-mono bg-gray-800 text-green-400 p-4 rounded overflow-x-auto">
-                      {selectedConcept.mermaidCode}
-                    </pre>
-                    <pre>
-                    <Mermaid chart={selectedConcept.mermaidCode}/>
+                    <pre className="text-sm font-mono text-green-400 p-4 rounded overflow-x-auto">
+                      <Mermaid chart = {selectedConcept.mermaidCode}/>
                     </pre>
                   </div>
                 </div>
