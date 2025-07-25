@@ -34,7 +34,10 @@ import {
   Plus,
   Filter,
   Search,
-  RefreshCw
+  RefreshCw,
+  FolderPlus,
+  Trash2,
+  Check
 } from 'lucide-react';
 
 //import Mermaid from "react-mermaid2";
@@ -53,182 +56,161 @@ const USER_TIERS = {
   ULTIMATE: 'ultimate'
 };
 
-// Mock Data
-const MOCK_CONCEPTUAL_DIAGRAMS = [
+// Mock Claude responses for conceptual models
+const MOCK_CONCEPTUAL_MODELS = [
   {
     id: 'concept_1',
-    name: 'E-commerce Platform',
-    description: 'Core entities for an e-commerce system',
+    name: 'Customer-Centric E-commerce Model',
+    description: 'Focus on customer relationships and order management',
+    entities: ['Customer', 'Order', 'Product', 'Payment'],
     complexity: 'Medium',
-    entities: ['Customer', 'Product', 'Order', 'Payment'],
     mermaidCode: `erDiagram
-    CUSTOMER {
-        int customer_id PK
-        string first_name
-        string last_name
-        string email
-        date created_at
-    }
-    PRODUCT {
-        int product_id PK
-        string name
-        decimal price
-        int stock_quantity
-        string category
-    }
-    ORDER {
-        int order_id PK
-        int customer_id FK
-        date order_date
-        decimal total_amount
-        string status
-    }
-    PAYMENT {
-        int payment_id PK
-        int order_id FK
-        string payment_method
-        decimal amount
-        date payment_date
-    }
     CUSTOMER ||--o{ ORDER : places
-    ORDER ||--|| PAYMENT : has
-    ORDER }o--o{ PRODUCT : contains`
+    ORDER ||--o{ ORDER_ITEM : contains
+    PRODUCT ||--o{ ORDER_ITEM : ordered
+    CUSTOMER ||--o{ PAYMENT : makes
+    ORDER ||--|| PAYMENT : paid_by`
   },
   {
-    id: 'concept_2',
-    name: 'Healthcare System',
-    description: 'Patient management and medical records',
+    id: 'concept_2', 
+    name: 'Product-Inventory Focused Model',
+    description: 'Emphasizes inventory and product catalog management',
+    entities: ['Product', 'Category', 'Inventory', 'Supplier', 'Order'],
     complexity: 'High',
-    entities: ['Patient', 'Doctor', 'Appointment', 'MedicalRecord'],
     mermaidCode: `erDiagram
-    PATIENT {
-        int patient_id PK
-        string first_name
-        string last_name
-        date birth_date
-        string phone
-        string address
-    }
-    DOCTOR {
-        int doctor_id PK
-        string first_name
-        string last_name
-        string specialization
-        string license_number
-    }
-    APPOINTMENT {
-        int appointment_id PK
-        int patient_id FK
-        int doctor_id FK
-        datetime appointment_time
-        string status
-        string notes
-    }
-    MEDICAL_RECORD {
-        int record_id PK
-        int patient_id FK
-        date visit_date
-        string diagnosis
-        string treatment
-        string prescription
-    }
-    PATIENT ||--o{ APPOINTMENT : schedules
-    DOCTOR ||--o{ APPOINTMENT : conducts
-    PATIENT ||--o{ MEDICAL_RECORD : has`
+    CATEGORY ||--o{ PRODUCT : contains
+    PRODUCT ||--|| INVENTORY : tracked_in
+    SUPPLIER ||--o{ PRODUCT : supplies
+    PRODUCT ||--o{ ORDER_ITEM : ordered
+    ORDER ||--o{ ORDER_ITEM : contains`
   },
   {
     id: 'concept_3',
-    name: 'Financial System',
-    description: 'Banking and transaction management',
-    complexity: 'High',
-    entities: ['Account', 'Transaction', 'Customer', 'Branch'],
+    name: 'Simplified Transaction Model',
+    description: 'Streamlined approach focusing on core transactions',
+    entities: ['User', 'Transaction', 'Item'],
+    complexity: 'Low',
     mermaidCode: `erDiagram
-    CUSTOMER {
-        int customer_id PK
-        string ssn
-        string first_name
-        string last_name
-        string email
-        string phone
-    }
-    ACCOUNT {
-        int account_id PK
-        int customer_id FK
-        string account_number
-        string account_type
-        decimal balance
-        date created_date
-    }
-    TRANSACTION {
-        int transaction_id PK
-        int account_id FK
-        string transaction_type
-        decimal amount
-        date transaction_date
-        string description
-    }
-    BRANCH {
-        int branch_id PK
-        string branch_name
-        string address
-        string phone
-        string manager_name
-    }
-    CUSTOMER ||--o{ ACCOUNT : owns
-    ACCOUNT ||--o{ TRANSACTION : has
-    BRANCH ||--o{ ACCOUNT : manages`
+    USER ||--o{ TRANSACTION : creates
+    TRANSACTION ||--o{ TRANSACTION_ITEM : includes
+    ITEM ||--o{ TRANSACTION_ITEM : sold_as`
   }
 ];
 
-const MOCK_LOGICAL_DIAGRAMS = {
-  concept_1: {
-    name: 'E-commerce Platform - Logical Model',
-    tables: [
-      {
-        name: 'customers',
-        columns: [
-          { name: 'customer_id', type: 'SERIAL', constraints: ['PRIMARY KEY'] },
-          { name: 'first_name', type: 'VARCHAR(50)', constraints: ['NOT NULL'] },
-          { name: 'last_name', type: 'VARCHAR(50)', constraints: ['NOT NULL'] },
-          { name: 'email', type: 'VARCHAR(255)', constraints: ['UNIQUE', 'NOT NULL'] },
-          { name: 'created_at', type: 'TIMESTAMP', constraints: ['DEFAULT CURRENT_TIMESTAMP'] }
-        ]
-      },
-      {
-        name: 'products',
-        columns: [
-          { name: 'product_id', type: 'SERIAL', constraints: ['PRIMARY KEY'] },
-          { name: 'name', type: 'VARCHAR(255)', constraints: ['NOT NULL'] },
-          { name: 'price', type: 'DECIMAL(10,2)', constraints: ['NOT NULL'] },
-          { name: 'stock_quantity', type: 'INTEGER', constraints: ['DEFAULT 0'] },
-          { name: 'category', type: 'VARCHAR(100)', constraints: [] }
-        ]
-      }
-    ],
-    mermaidCode: `erDiagram
+// Mock logical model
+const MOCK_LOGICAL_MODEL = {
+  mermaidCode: `erDiagram
     customers {
-        SERIAL customer_id PK
-        VARCHAR_50 first_name "NOT NULL"
-        VARCHAR_50 last_name "NOT NULL"
-        VARCHAR_255 email "UNIQUE, NOT NULL"
-        TIMESTAMP created_at "DEFAULT CURRENT_TIMESTAMP"
-    }
-    products {
-        SERIAL product_id PK
-        VARCHAR_255 name "NOT NULL"
-        DECIMAL_10_2 price "NOT NULL"
-        INTEGER stock_quantity "DEFAULT 0"
-        VARCHAR_100 category
+        int customer_id PK
+        varchar email UK
+        varchar first_name
+        varchar last_name
+        timestamp created_at
+        timestamp updated_at
     }
     orders {
-        SERIAL order_id PK
-        INTEGER customer_id FK
-        TIMESTAMP order_date "DEFAULT CURRENT_TIMESTAMP"
-        DECIMAL_10_2 total_amount "NOT NULL"
-        VARCHAR_20 status "DEFAULT 'pending'"
+        int order_id PK
+        int customer_id FK
+        decimal total_amount
+        varchar status
+        timestamp order_date
+        timestamp updated_at
     }
-    customers ||--o{ orders : places`
-  }
+    products {
+        int product_id PK
+        varchar name
+        text description
+        decimal price
+        int stock_quantity
+        timestamp created_at
+    }
+    order_items {
+        int order_item_id PK
+        int order_id FK
+        int product_id FK
+        int quantity
+        decimal unit_price
+    }
+    customers ||--o{ orders : places
+    orders ||--o{ order_items : contains
+    products ||--o{ order_items : ordered`
+};
+
+// Mock physical model
+const MOCK_PHYSICAL_MODEL = {
+  sqlCode: `-- Physical Database Schema
+CREATE TABLE customers (
+    customer_id SERIAL PRIMARY KEY,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    first_name VARCHAR(100) NOT NULL,
+    last_name VARCHAR(100) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE products (
+    product_id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    price DECIMAL(10,2) NOT NULL,
+    stock_quantity INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE orders (
+    order_id SERIAL PRIMARY KEY,
+    customer_id INTEGER REFERENCES customers(customer_id),
+    total_amount DECIMAL(10,2) NOT NULL,
+    status VARCHAR(50) DEFAULT 'pending',
+    order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE order_items (
+    order_item_id SERIAL PRIMARY KEY,
+    order_id INTEGER REFERENCES orders(order_id),
+    product_id INTEGER REFERENCES products(product_id),
+    quantity INTEGER NOT NULL,
+    unit_price DECIMAL(10,2) NOT NULL
+);`
+};
+// Mock physical model
+const MOCK_PHYSICAL_DIAGRAMS = {
+  sqlCode: `-- Physical Database Schema
+CREATE TABLE customers (
+    customer_id SERIAL PRIMARY KEY,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    first_name VARCHAR(100) NOT NULL,
+    last_name VARCHAR(100) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE products (
+    product_id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    price DECIMAL(10,2) NOT NULL,
+    stock_quantity INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE orders (
+    order_id SERIAL PRIMARY KEY,
+    customer_id INTEGER REFERENCES customers(customer_id),
+    total_amount DECIMAL(10,2) NOT NULL,
+    status VARCHAR(50) DEFAULT 'pending',
+    order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE order_items (
+    order_item_id SERIAL PRIMARY KEY,
+    order_id INTEGER REFERENCES orders(order_id),
+    product_id INTEGER REFERENCES products(product_id),
+    quantity INTEGER NOT NULL,
+    unit_price DECIMAL(10,2) NOT NULL
+);`
 };
 
 const MOCK_ETL_PROCESSES = {
@@ -281,6 +263,38 @@ graph.add_chain(
     }
   }
 };
+
+// Mock ETL code
+const MOCK_ETL_CODE = `import bonobo
+from bonobo.contrib.sqlalchemy import begin
+
+# ETL Pipeline for Data Modeling Project
+def extract():
+    """Extract data from source systems"""
+    # Extract customer data
+    yield {'table': 'customers', 'action': 'extract'}
+    
+def transform_customers(row):
+    """Transform customer data"""
+    # Data validation and cleaning
+    if row.get('email'):
+        row['email'] = row['email'].lower().strip()
+    return row
+
+def load_to_warehouse(row):
+    """Load transformed data to warehouse"""
+    # Load to target system
+    print(f"Loading {row}")
+
+# Define the ETL graph
+graph = bonobo.Graph(
+    extract,
+    transform_customers,
+    load_to_warehouse,
+)
+
+if __name__ == '__main__':
+    bonobo.run(graph)`;
 
 // Simulated Supabase Client
 class SupabaseClient {
@@ -894,345 +908,573 @@ const DashboardPage = () => {
   );
 };
 
-// Data Modeler Page - Main Application
+const PROJECT_LIMITS = {
+  [USER_TIERS.FREE]: 0,
+  [USER_TIERS.PREMIUM]: 3,
+  [USER_TIERS.ULTIMATE]: 25
+};
+
+
 const DataModelerPage = () => {
   const { getUserTier } = useContext(AuthContext);
-  const [selectedConcept, setSelectedConcept] = useState(null);
-  const [showLogical, setShowLogical] = useState(false);
-  const [savedModels, setSavedModels] = useState([]);
-  const [selectedETLAttribute, setSelectedETLAttribute] = useState(null);
-  const [isGenerating, setIsGenerating] = useState(false);
-
   const userTier = getUserTier();
-  const canSelectConcept = userTier === USER_TIERS.PREMIUM || userTier === USER_TIERS.ULTIMATE;
-  const canViewLogical = userTier === USER_TIERS.PREMIUM || userTier === USER_TIERS.ULTIMATE;
-  const canSaveModel = userTier === USER_TIERS.PREMIUM || userTier === USER_TIERS.ULTIMATE;
-  const canViewETL = userTier === USER_TIERS.ULTIMATE;
+  
+  // State management
+  const [projects, setProjects] = useState([]);
+  const [selectedProject, setSelectedProject] = useState(null);
+  const [showCreateProject, setShowCreateProject] = useState(false);
+  const [newProjectName, setNewProjectName] = useState('');
+  const [uploadedFile, setUploadedFile] = useState(null);
+  const [headerAttributes, setHeaderAttributes] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [conceptualModels, setConceptualModels] = useState([]);
+  const [selectedConceptualModel, setSelectedConceptualModel] = useState(null);
+  const [logicalModel, setLogicalModel] = useState(null);
+  const [physicalModel, setPhysicalModel] = useState(null);
+  const [etlCode, setEtlCode] = useState(null);
+  const [activeStep, setActiveStep] = useState('projects'); // projects, upload, concepts, models, etl
 
-  const handleConceptSelect = (concept) => {
-    if (!canSelectConcept) return;
-    setSelectedConcept(concept);
-    setShowLogical(false);
-    setSelectedETLAttribute(null);
-  };
+  const canCreateProject = PROJECT_LIMITS[userTier] > 0 && projects.length < PROJECT_LIMITS[userTier];
+  const canUploadData = userTier === USER_TIERS.PREMIUM || userTier === USER_TIERS.ULTIMATE;
+  const canGenerateModels = userTier === USER_TIERS.PREMIUM || userTier === USER_TIERS.ULTIMATE;
 
-  const handleSaveModel = async () => {
-    if (!canSaveModel || !selectedConcept) return;
+  // Project management
+  const handleCreateProject = () => {
+    if (!canCreateProject || !newProjectName.trim()) return;
     
-    setIsGenerating(true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    const newModel = {
-      id: `saved_${Date.now()}`,
-      name: selectedConcept.name,
-      conceptId: selectedConcept.id,
-      savedAt: new Date().toISOString(),
-      hasLogical: showLogical
+    const newProject = {
+      id: `project_${Date.now()}`,
+      name: newProjectName.trim(),
+      createdAt: new Date().toISOString(),
+      conceptualModel: null,
+      logicalModel: null,
+      physicalModel: null,
+      etlCode: null
     };
     
-    setSavedModels([...savedModels, newModel]);
-    setIsGenerating(false);
+    setProjects([...projects, newProject]);
+    setSelectedProject(newProject);
+    setNewProjectName('');
+    setShowCreateProject(false);
+    setActiveStep('upload');
   };
 
-  const generateLogicalDiagram = async () => {
-    if (!canViewLogical) return;
-    
+  const handleSelectProject = (project) => {
+    setSelectedProject(project);
+    if (project.conceptualModel) {
+      setSelectedConceptualModel(project.conceptualModel);
+      setLogicalModel(project.logicalModel);
+      setPhysicalModel(project.physicalModel);
+      setEtlCode(project.etlCode);
+      setActiveStep('models');
+    } else {
+      setActiveStep('upload');
+    }
+  };
+
+  const handleDeleteProject = (projectId) => {
+    setProjects(projects.filter(p => p.id !== projectId));
+    if (selectedProject?.id === projectId) {
+      setSelectedProject(null);
+      setActiveStep('projects');
+    }
+  };
+
+  // File upload handling
+  const handleFileUpload = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      setUploadedFile(file);
+      // Simulate reading CSV headers
+      const mockHeaders = 'customer_id,email,first_name,last_name,order_date,product_name,quantity,price';
+      setHeaderAttributes(mockHeaders);
+    }
+  };
+
+  // Mock Claude API calls
+  const generateConceptualModels = async () => {
     setIsGenerating(true);
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    setShowLogical(true);
+    setActiveStep('concepts');
+    
+    // Simulate API call delay
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    setConceptualModels(MOCK_CONCEPTUAL_MODELS);
     setIsGenerating(false);
   };
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="flex h-screen pt-16">
-        {/* Left Sidebar - Interactive Elements */}
-        <div className="w-80 bg-white border-r border-gray-200 overflow-y-auto">
-          <div className="p-6">
-            <h2 className="text-xl font-bold text-[#0E073D] mb-6">Data Modeler</h2>
-            
-            {/* Conceptual Diagrams */}
-            <div className="mb-8">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-gray-800">Conceptual Models</h3>
-                {userTier === USER_TIERS.FREE && (
-                  <span className="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded">
-                    View Only
-                  </span>
-                )}
+  const selectConceptualModel = async (model) => {
+    setSelectedConceptualModel(model);
+    setIsGenerating(true);
+    
+    // Update project with selected conceptual model
+    const updatedProject = {
+      ...selectedProject,
+      conceptualModel: model
+    };
+    
+    setProjects(projects.map(p => p.id === selectedProject.id ? updatedProject : p));
+    setSelectedProject(updatedProject);
+    
+    // Generate logical and physical models
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    const finalProject = {
+      ...updatedProject,
+      logicalModel: MOCK_LOGICAL_MODEL,
+      physicalModel: MOCK_PHYSICAL_MODEL
+    };
+    
+    setProjects(projects.map(p => p.id === selectedProject.id ? finalProject : p));
+    setSelectedProject(finalProject);
+    setLogicalModel(MOCK_LOGICAL_MODEL);
+    setPhysicalModel(MOCK_PHYSICAL_MODEL);
+    setActiveStep('models');
+    setIsGenerating(false);
+  };
+
+  const generateETL = async () => {
+    setIsGenerating(true);
+    
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    const updatedProject = {
+      ...selectedProject,
+      etlCode: MOCK_ETL_CODE
+    };
+    
+    setProjects(projects.map(p => p.id === selectedProject.id ? updatedProject : p));
+    setSelectedProject(updatedProject);
+    setEtlCode(MOCK_ETL_CODE);
+    setActiveStep('etl');
+    setIsGenerating(false);
+  };
+
+  const renderProjectsView = () => (
+    <div className="max-w-4xl mx-auto">
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h2 className="text-2xl font-bold text-[#0E073D]">Data Modeling Projects</h2>
+          <p className="text-gray-600 mt-2">
+            Create and manage your data modeling projects ({projects.length}/{PROJECT_LIMITS[userTier]} used)
+          </p>
+        </div>
+        
+        {canCreateProject && (
+          <button
+            onClick={() => setShowCreateProject(true)}
+            className="bg-[#FFCD00] text-[#0E073D] px-4 py-2 rounded-lg font-medium hover:bg-yellow-300 transition-colors flex items-center space-x-2"
+          >
+            <Plus className="h-4 w-4" />
+            <span>New Project</span>
+          </button>
+        )}
+      </div>
+
+      {/* Create Project Modal */}
+      {showCreateProject && (
+        <div className="mb-6 p-6 bg-white border border-gray-200 rounded-lg">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">Create New Project</h3>
+          <div className="flex space-x-4">
+            <input
+              type="text"
+              value={newProjectName}
+              onChange={(e) => setNewProjectName(e.target.value)}
+              placeholder="Enter project name..."
+              className="flex-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:border-[#FFCD00]"
+            />
+            <button
+              onClick={handleCreateProject}
+              disabled={!newProjectName.trim()}
+              className="bg-[#0E073D] text-white px-6 py-3 rounded-lg font-medium hover:bg-purple-800 transition-colors disabled:bg-gray-300"
+            >
+              Create
+            </button>
+            <button
+              onClick={() => setShowCreateProject(false)}
+              className="bg-gray-200 text-gray-700 px-6 py-3 rounded-lg font-medium hover:bg-gray-300 transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Projects Grid */}
+      {projects.length === 0 ? (
+        <div className="text-center py-12">
+          <FolderPlus className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-xl font-medium text-gray-600 mb-2">No Projects Yet</h3>
+          <p className="text-gray-500 mb-6">Create your first data modeling project to get started</p>
+          {!canCreateProject && (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 max-w-md mx-auto">
+              <p className="text-yellow-800 text-sm">
+                {userTier === USER_TIERS.FREE 
+                  ? 'Upgrade to Premium to create projects'
+                  : 'You have reached your project limit'
+                }
+              </p>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {projects.map((project) => (
+            <div key={project.id} className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
+              <div className="flex items-start justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-800">{project.name}</h3>
+                <button
+                  onClick={() => handleDeleteProject(project.id)}
+                  className="text-gray-400 hover:text-red-500 transition-colors"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
               </div>
               
-              <div className="space-y-3">
-                {MOCK_CONCEPTUAL_DIAGRAMS.map((concept) => (
-                  <div
-                    key={concept.id}
-                    onClick={() => handleConceptSelect(concept)}
-                    className={`p-4 border rounded-lg transition-all cursor-pointer ${
-                      selectedConcept?.id === concept.id
-                        ? 'border-[#FFCD00] bg-[#FFCD00] bg-opacity-20'
-                        : canSelectConcept
-                        ? 'border-gray-200 hover:border-[#FFCD00] hover:bg-gray-50'
-                        : 'border-gray-200 bg-gray-50 cursor-not-allowed opacity-60'
-                    }`}
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <h4 className="font-medium text-gray-800 text-sm">{concept.name}</h4>
-                      <span className={`text-xs px-2 py-1 rounded ${
-                        concept.complexity === 'High' ? 'bg-red-100 text-red-600' :
-                        concept.complexity === 'Medium' ? 'bg-yellow-100 text-yellow-600' :
-                        'bg-green-100 text-green-600'
-                      }`}>
-                        {concept.complexity}
-                      </span>
-                    </div>
-                    <p className="text-xs text-gray-600 mb-2">{concept.description}</p>
-                    <div className="flex flex-wrap gap-1">
-                      {concept.entities.slice(0, 3).map((entity, idx) => (
-                        <span key={idx} className="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded">
-                          {entity}
-                        </span>
-                      ))}
-                      {concept.entities.length > 3 && (
-                        <span className="text-xs text-gray-500">+{concept.entities.length - 3}</span>
-                      )}
-                    </div>
-                  </div>
+              <p className="text-sm text-gray-500 mb-4">
+                Created {new Date(project.createdAt).toLocaleDateString()}
+              </p>
+              
+              <div className="space-y-2 mb-4">
+                <div className="flex items-center space-x-2">
+                  {project.conceptualModel ? <Check className="h-4 w-4 text-green-500" /> : <X className="h-4 w-4 text-gray-300" />}
+                  <span className="text-sm text-gray-600">Conceptual Model</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  {project.logicalModel ? <Check className="h-4 w-4 text-green-500" /> : <X className="h-4 w-4 text-gray-300" />}
+                  <span className="text-sm text-gray-600">Logical Model</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  {project.physicalModel ? <Check className="h-4 w-4 text-green-500" /> : <X className="h-4 w-4 text-gray-300" />}
+                  <span className="text-sm text-gray-600">Physical Model</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  {project.etlCode ? <Check className="h-4 w-4 text-green-500" /> : <X className="h-4 w-4 text-gray-300" />}
+                  <span className="text-sm text-gray-600">ETL Pipeline</span>
+                </div>
+              </div>
+              
+              <button
+                onClick={() => handleSelectProject(project)}
+                className="w-full bg-[#0E073D] text-white py-2 rounded-lg font-medium hover:bg-purple-800 transition-colors flex items-center justify-center space-x-2"
+              >
+                <Eye className="h-4 w-4" />
+                <span>Open Project</span>
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
+  const renderUploadView = () => (
+    <div className="max-w-2xl mx-auto">
+      <div className="mb-8">
+        <h2 className="text-2xl font-bold text-[#0E073D] mb-2">Upload Data Attributes</h2>
+        <p className="text-gray-600">Upload your CSV file or paste header attributes to generate conceptual models</p>
+      </div>
+
+      <div className="space-y-6">
+        {/* File Upload */}
+        <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+          <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-700 mb-2">Upload CSV File</h3>
+          <p className="text-gray-500 mb-4">Drop your CSV file here or click to browse</p>
+          <input
+            type="file"
+            accept=".csv"
+            onChange={handleFileUpload}
+            className="hidden"
+            id="csvUpload"
+          />
+          <label
+            htmlFor="csvUpload"
+            className="bg-[#FFCD00] text-[#0E073D] px-6 py-2 rounded-lg font-medium hover:bg-yellow-300 transition-colors cursor-pointer inline-block"
+          >
+            Choose File
+          </label>
+          {uploadedFile && (
+            <p className="text-sm text-green-600 mt-2">
+              ✓ {uploadedFile.name} uploaded successfully
+            </p>
+          )}
+        </div>
+
+        {/* Manual Attributes Input */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Or paste header attributes manually:
+          </label>
+          <textarea
+            value={headerAttributes}
+            onChange={(e) => setHeaderAttributes(e.target.value)}
+            placeholder="customer_id,email,first_name,last_name,order_date,product_name,quantity,price"
+            className="w-full p-4 border border-gray-300 rounded-lg focus:outline-none focus:border-[#FFCD00] h-32"
+          />
+        </div>
+
+        {/* Generate Button */}
+        <div className="flex space-x-4">
+          <button
+            onClick={generateConceptualModels}
+            disabled={!headerAttributes.trim() || isGenerating}
+            className="flex-1 bg-[#0E073D] text-white py-3 rounded-lg font-medium hover:bg-purple-800 transition-colors disabled:bg-gray-300 flex items-center justify-center space-x-2"
+          >
+            {isGenerating ? (
+              <Loader className="h-4 w-4 animate-spin" />
+            ) : (
+              <GitBranch className="h-4 w-4" />
+            )}
+            <span>
+              {isGenerating ? 'Generating Models...' : 'Generate Conceptual Models'}
+            </span>
+          </button>
+          
+          <button
+            onClick={() => setActiveStep('projects')}
+            className="px-6 py-3 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            Back
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderConceptsView = () => (
+    <div className="max-w-4xl mx-auto">
+      <div className="mb-8">
+        <h2 className="text-2xl font-bold text-[#0E073D] mb-2">Choose Conceptual Model</h2>
+        <p className="text-gray-600">Select the conceptual model that best fits your data structure</p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {conceptualModels.map((model) => (
+          <div
+            key={model.id}
+            className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow cursor-pointer"
+            onClick={() => selectConceptualModel(model)}
+          >
+            <div className="flex items-start justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-800">{model.name}</h3>
+              <span className={`text-xs px-2 py-1 rounded ${
+                model.complexity === 'High' ? 'bg-red-100 text-red-600' :
+                model.complexity === 'Medium' ? 'bg-yellow-100 text-yellow-600' :
+                'bg-green-100 text-green-600'
+              }`}>
+                {model.complexity}
+              </span>
+            </div>
+            
+            <p className="text-sm text-gray-600 mb-4">{model.description}</p>
+            
+            <div className="mb-4">
+              <h4 className="text-sm font-medium text-gray-700 mb-2">Entities:</h4>
+              <div className="flex flex-wrap gap-1">
+                {model.entities.map((entity, idx) => (
+                  <span key={idx} className="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded">
+                    {entity}
+                  </span>
                 ))}
               </div>
             </div>
+            
+            <div className="border border-gray-200 rounded p-4 bg-gray-50">
+              <MermaidChart chart={model.mermaidCode} />
+            </div>
+            
+            <button className="w-full mt-4 bg-[#FFCD00] text-[#0E073D] py-2 rounded-lg font-medium hover:bg-yellow-300 transition-colors">
+              Select This Model
+            </button>
+          </div>
+        ))}
+      </div>
 
-            {/* Logical Diagram Controls */}
-            {selectedConcept && (
-              <div className="mb-8">
-                <h3 className="font-semibold text-gray-800 mb-4">Logical Model</h3>
-                <button
-                  onClick={generateLogicalDiagram}
-                  disabled={!canViewLogical || isGenerating}
-                  className={`w-full p-3 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2 ${
-                    canViewLogical
-                      ? 'bg-[#0E073D] text-white hover:bg-purple-800'
-                      : 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                  }`}
-                >
-                  {isGenerating ? (
-                    <Loader className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <GitBranch className="h-4 w-4" />
-                  )}
-                  <span>
-                    {isGenerating ? 'Generating...' : 'Generate Logical Model'}
-                  </span>
-                </button>
-                
-                {!canViewLogical && (
-                  <p className="text-xs text-gray-500 mt-2 text-center">
-                    Upgrade to Premium to access logical diagrams
-                  </p>
-                )}
-              </div>
-            )}
+      {isGenerating && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-8 rounded-lg text-center">
+            <Loader className="h-8 w-8 animate-spin mx-auto mb-4 text-[#0E073D]" />
+            <h3 className="text-lg font-semibold mb-2">Generating Models</h3>
+            <p className="text-gray-600">Creating logical and physical models...</p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 
-            {/* ETL Controls */}
-            {selectedConcept && canViewETL && (
-              <div className="mb-8">
-                <h3 className="font-semibold text-gray-800 mb-4">ETL Pipeline</h3>
-                <div className="space-y-2">
-                  {['customer_id', 'email', 'order_date'].map((attr) => (
-                    <button
-                      key={attr}
-                      onClick={() => setSelectedETLAttribute(attr)}
-                      className={`w-full text-left p-2 rounded transition-colors ${
-                        selectedETLAttribute === attr
-                          ? 'bg-purple-100 text-purple-800'
-                          : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-                      }`}
-                    >
-                      <span className="text-sm font-medium">{attr}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
+  const renderModelsView = () => (
+    <div className="max-w-6xl mx-auto">
+      <div className="mb-8">
+        <h2 className="text-2xl font-bold text-[#0E073D] mb-2">{selectedProject?.name}</h2>
+        <p className="text-gray-600">Generated data models for your project</p>
+      </div>
 
-            {/* Saved Models */}
-            <div>
-              <h3 className="font-semibold text-gray-800 mb-4">Saved Models</h3>
-              {savedModels.length === 0 ? (
-                <p className="text-sm text-gray-500">No saved models yet</p>
-              ) : (
-                <div className="space-y-2">
-                  {savedModels.map((model) => (
-                    <div key={model.id} className="p-3 bg-gray-50 rounded-lg">
-                      <h4 className="font-medium text-gray-800 text-sm">{model.name}</h4>
-                      <p className="text-xs text-gray-500">
-                        Saved {new Date(model.savedAt).toLocaleDateString()}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              )}
+      <div className="space-y-8">
+        {/* Conceptual Model */}
+        {selectedConceptualModel && (
+          <div className="bg-white border border-gray-200 rounded-lg p-6">
+            <h3 className="text-xl font-semibold text-gray-800 mb-4">Conceptual Model</h3>
+            <div className="bg-gray-50 border border-gray-200 rounded p-4">
+              <MermaidChart chart={selectedConceptualModel.mermaidCode} />
             </div>
           </div>
-        </div>
+        )}
 
-        {/* Middle Panel - Diagram Viewing */}
-        <div className="flex-1 bg-white overflow-y-auto">
-          <div className="p-6">
-            {!selectedConcept ? (
-              <div className="flex items-center justify-center h-full text-center">
-                <div>
-                  <Database className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-xl font-medium text-gray-600 mb-2">
-                    Select a Conceptual Model
-                  </h3>
-                  <p className="text-gray-500">
-                    Choose a model from the left panel to view and work with it
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-6">
-                {/* Conceptual Diagram */}
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-bold text-[#0E073D]">
-                      {selectedConcept.name} - Conceptual Model
-                    </h3>
-                    <div className="flex items-center space-x-2">
-                      <span className="text-sm text-gray-500">
-                        {selectedConcept.entities.length} entities
-                      </span>
-                    </div>
-                  </div>
-                  
-                  <div className="border border-gray-300 rounded-lg p-6 bg-gray-50">
-                    <pre className="text-sm font-mono bg-gray-800 text-green-400 p-4 rounded overflow-x-auto">
-                      {selectedConcept.mermaidCode}
-                    </pre>
-                  </div>
-                  <div className="border border-gray-300 rounded-lg p-6 bg-gray-50">
-                    <pre className="text-sm font-mono bg-gray-800 text-green-400 p-4 rounded overflow-x-auto">
-                      <MermaidChart chart = {selectedConcept.mermaidCode}/>
-                    </pre>
-                  </div>
-                </div>
-
-                {/* Logical Diagram */}
-                {showLogical && MOCK_LOGICAL_DIAGRAMS[selectedConcept.id] && (
-                  <div>
-                    <h3 className="text-lg font-bold text-[#0E073D] mb-4">
-                      Logical Model - Database Schema
-                    </h3>
-                    
-                    <div className="border border-gray-300 rounded-lg p-6 bg-gray-50">
-                      <pre className="text-sm font-mono bg-gray-800 text-blue-400 p-4 rounded overflow-x-auto">
-                        {MOCK_LOGICAL_DIAGRAMS[selectedConcept.id].mermaidCode}
-                      </pre>
-                    </div>
-                  </div>
-                )}
-
-                {/* ETL Code */}
-                {selectedETLAttribute && canViewETL && MOCK_ETL_PROCESSES[selectedConcept.id]?.[selectedETLAttribute] && (
-                  <div>
-                    <h3 className="text-lg font-bold text-[#0E073D] mb-4">
-                      ETL Pipeline - {selectedETLAttribute}
-                    </h3>
-                    
-                    <div className="border border-gray-300 rounded-lg p-6 bg-gray-50">
-                      <div className="mb-4">
-                        <h4 className="font-medium text-gray-800 mb-2">Process Overview:</h4>
-                        <div className="grid grid-cols-3 gap-4 text-sm">
-                          <div>
-                            <span className="font-medium text-gray-600">Extract:</span>
-                            <p className="text-gray-700">{MOCK_ETL_PROCESSES[selectedConcept.id][selectedETLAttribute].extractSource}</p>
-                          </div>
-                          <div>
-                            <span className="font-medium text-gray-600">Transform:</span>
-                            <div className="text-gray-700">
-                              {MOCK_ETL_PROCESSES[selectedConcept.id][selectedETLAttribute].transformRules.map((rule, idx) => (
-                                <p key={idx}>• {rule}</p>
-                              ))}
-                            </div>
-                          </div>
-                          <div>
-                            <span className="font-medium text-gray-600">Load:</span>
-                            <p className="text-gray-700">{MOCK_ETL_PROCESSES[selectedConcept.id][selectedETLAttribute].loadTarget}</p>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <h4 className="font-medium text-gray-800 mb-2">Bonobo ETL Code:</h4>
-                      <pre className="text-sm font-mono bg-gray-800 text-purple-400 p-4 rounded overflow-x-auto">
-                        {MOCK_ETL_PROCESSES[selectedConcept.id][selectedETLAttribute].bonoboCode}
-                      </pre>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
+        {/* Logical Model */}
+        {logicalModel && (
+          <div className="bg-white border border-gray-200 rounded-lg p-6">
+            <h3 className="text-xl font-semibold text-gray-800 mb-4">Logical Model</h3>
+            <div className="bg-gray-50 border border-gray-200 rounded p-4">
+              <MermaidChart chart={logicalModel.mermaidCode} />
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* Right Panel - User Actions */}
-        <div className="w-64 bg-gray-50 border-l border-gray-200 overflow-y-auto">
-          <div className="p-6">
-            <h3 className="font-semibold text-gray-800 mb-6">Actions</h3>
+        {/* Physical Model */}
+        {physicalModel && (
+          <div className="bg-white border border-gray-200 rounded-lg p-6">
+            <h3 className="text-xl font-semibold text-gray-800 mb-4">Physical Model (SQL Schema)</h3>
+            <div className="bg-gray-900 text-green-400 p-4 rounded overflow-x-auto">
+              <pre className="text-sm">{physicalModel.sqlCode}</pre>
+            </div>
+          </div>
+        )}
+
+        {/* Action Buttons */}
+        <div className="flex space-x-4">
+          {physicalModel && !etlCode && (
+            <button
+              onClick={generateETL}
+              disabled={isGenerating}
+              className="bg-[#0E073D] text-white px-6 py-3 rounded-lg font-medium hover:bg-purple-800 transition-colors disabled:bg-gray-300 flex items-center space-x-2"
+            >
+              {isGenerating ? (
+                <Loader className="h-4 w-4 animate-spin" />
+              ) : (
+                <Code className="h-4 w-4" />
+              )}
+              <span>Generate ETL Pipeline</span>
+            </button>
+          )}
+
+          {etlCode && (
+            <button
+              onClick={() => setActiveStep('etl')}
+              className="bg-[#FFCD00] text-[#0E073D] px-6 py-3 rounded-lg font-medium hover:bg-yellow-300 transition-colors flex items-center space-x-2"
+            >
+              <Code className="h-4 w-4" />
+              <span>View ETL Code</span>
+            </button>
+          )}
+
+          <button
+            className="border border-gray-300 text-gray-700 px-6 py-3 rounded-lg font-medium hover:bg-gray-50 transition-colors flex items-center space-x-2"
+          >
+            <Download className="h-4 w-4" />
+            <span>Export Models</span>
+          </button>
+
+          <button
+            onClick={() => setActiveStep('projects')}
+            className="border border-gray-300 text-gray-700 px-6 py-3 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+          >
+            Back to Projects
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderETLView = () => (
+    <div className="max-w-4xl mx-auto">
+      <div className="mb-8">
+        <h2 className="text-2xl font-bold text-[#0E073D] mb-2">ETL Pipeline</h2>
+        <p className="text-gray-600">Generated Bonobo ETL code for your data model</p>
+      </div>
+
+      <div className="bg-white border border-gray-200 rounded-lg p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-xl font-semibold text-gray-800">Bonobo ETL Pipeline</h3>
+          <button className="bg-[#FFCD00] text-[#0E073D] px-4 py-2 rounded font-medium hover:bg-yellow-300 transition-colors flex items-center space-x-2">
+            <Download className="h-4 w-4" />
+            <span>Download</span>
+          </button>
+        </div>
+        
+        <div className="bg-gray-900 text-green-400 p-6 rounded overflow-x-auto">
+          <pre className="text-sm">{etlCode}</pre>
+        </div>
+        
+        <div className="mt-6 flex space-x-4">
+          <button
+            onClick={() => setActiveStep('models')}
+            className="border border-gray-300 text-gray-700 px-6 py-3 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+          >
+            Back to Models
+          </button>
+          
+          <button
+            onClick={() => setActiveStep('projects')}
+            className="border border-gray-300 text-gray-700 px-6 py-3 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+          >
+            Back to Projects
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="pt-16">
+        {/* Breadcrumb Navigation */}
+        <div className="bg-white border-b border-gray-200 px-6 py-4">
+          <div className="flex items-center space-x-2 text-sm">
+            <button 
+              onClick={() => setActiveStep('projects')}
+              className={`${activeStep === 'projects' ? 'text-[#0E073D] font-medium' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              Projects
+            </button>
             
-            {selectedConcept && (
-              <div className="space-y-4">
-                <button
-                  onClick={handleSaveModel}
-                  disabled={!canSaveModel || isGenerating}
-                  className={`w-full p-3 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2 ${
-                    canSaveModel
-                      ? 'bg-[#FFCD00] text-[#0E073D] hover:bg-yellow-300'
-                      : 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                  }`}
+            {selectedProject && (
+              <>
+                <ChevronRight className="h-4 w-4 text-gray-400" />
+                <button 
+                  onClick={() => setActiveStep('upload')}
+                  className={`${activeStep === 'upload' ? 'text-[#0E073D] font-medium' : 'text-gray-500 hover:text-gray-700'}`}
                 >
-                  {isGenerating ? (
-                    <Loader className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Save className="h-4 w-4" />
-                  )}
-                  <span>Save Model</span>
+                  {selectedProject.name}
                 </button>
-
-                <button
-                  className="w-full p-3 bg-white border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-colors flex items-center justify-center space-x-2"
-                >
-                  <Download className="h-4 w-4" />
-                  <span>Export Diagram</span>
-                </button>
-
-                <button
-                  className="w-full p-3 bg-white border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-colors flex items-center justify-center space-x-2"
-                >
-                  <Code className="h-4 w-4" />
-                  <span>Generate SQL</span>
-                </button>
-
-                {!canSaveModel && (
-                  <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                    <h4 className="font-medium text-yellow-800 mb-2">Upgrade for More</h4>
-                    <p className="text-sm text-yellow-700 mb-3">
-                      Get Premium to save models and access logical diagrams
-                    </p>
-                    <button className="w-full p-2 bg-yellow-200 text-yellow-800 rounded font-medium hover:bg-yellow-300 transition-colors">
-                      Upgrade Now
-                    </button>
-                  </div>
-                )}
-              </div>
+              </>
             )}
-
-            {!selectedConcept && (
-              <div className="text-center text-gray-500">
-                <Layers className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p className="text-sm">Select a model to see available actions</p>
-              </div>
+            
+            {activeStep === 'concepts' && (
+              <>
+                <ChevronRight className="h-4 w-4 text-gray-400" />
+                <span className="text-[#0E073D] font-medium">Choose Model</span>
+              </>
+            )}
+            
+            {(activeStep === 'models' || activeStep === 'etl') && selectedConceptualModel && (
+              <>
+                <ChevronRight className="h-4 w-4 text-gray-400" />
+                <span className="text-[#0E073D] font-medium">
+                  {activeStep === 'models' ? 'Models' : 'ETL Pipeline'}
+                </span>
+              </>
             )}
           </div>
+        </div>
+
+        {/* Main Content */}
+        <div className="p-6">
+          {activeStep === 'projects' && renderProjectsView()}
+          {activeStep === 'upload' && renderUploadView()}
+          {activeStep === 'concepts' && renderConceptsView()}
+          {activeStep === 'models' && renderModelsView()}
+          {activeStep === 'etl' && renderETLView()}
         </div>
       </div>
     </div>
